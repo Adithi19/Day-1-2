@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 20px;
+        }
+  
+        h1 {
+          margin-bottom: 20px;
+          text-align: center;
+        }
+  
+        form {
+          margin-bottom: 20px;
+          align-items: center;
+        }
+  
+        input,
+        button {
+          margin-right: 10px;
+        }
+  
+        button {
+          padding: 5px 10px;
+          background-color: #007bff;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+        }
+
+        ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      li {
+        margin-bottom: 10px;
+      }
+
+      span {
+        margin-right: 10px;
+      }
+    </style>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      function PlayerForm({ addPlayer, editPlayer, editMode, setEditMode, editedPlayer }) {
+        const [name, setName] = React.useState(editedPlayer ? editedPlayer.name : '');
+        const [age, setAge] = React.useState(editedPlayer ? editedPlayer.age : '');
+        const [team, setTeam] = React.useState(editedPlayer ? editedPlayer.team : '');
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          if (name && age && team) {
+            if (editMode) {
+              editPlayer({ id: editedPlayer.id, name, age, team });
+              setEditMode(false);
+            } else {
+              const player = { name, age, team };
+              addPlayer(player);
+            }
+            setName('');
+            setAge('');
+            setTeam('');
+          }
+        };
+
+        return (
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="Age"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Team"
+              value={team}
+              onChange={(e) => setTeam(e.target.value)}
+            />
+            <button type="submit">{editMode ? 'Save' : 'Add Player'}</button>
+          </form>
+        );
+      }
+
+      function PlayerList({ players, deletePlayer, editPlayer }) {
+        const [editMode, setEditMode] = React.useState(false);
+        const [editedPlayer, setEditedPlayer] = React.useState(null);
+
+        const handleEdit = (player) => {
+          setEditedPlayer(player);
+          setEditMode(true);
+        };
+
+        const handleCancel = () => {
+          setEditedPlayer(null);
+          setEditMode(false);
+        };
+
+        return (
+          <ul>
+            {players.map((player) => (
+              <li key={player.id}>
+                {editMode && editedPlayer && editedPlayer.id === player.id ? (
+                  <PlayerForm
+                    editPlayer={editPlayer}
+                    editMode={editMode}
+                    setEditMode={setEditMode}
+                    editedPlayer={editedPlayer}
+                  />
+                ) : (
+                  <span>
+                    {player.name}, Age: {player.age}, Team: {player.team}
+                  </span>
+                )}
+                {!editMode || (editMode && (!editedPlayer || editedPlayer.id !== player.id)) ? (
+                  <button onClick={() => handleEdit(player)}>Edit</button>
+                ) : null}
+                {editMode && editedPlayer && editedPlayer.id === player.id ? (
+                  <button onClick={handleCancel}>Cancel</button>
+                ) : null}
+                <button onClick={() => deletePlayer(player.id)}>Delete</button>
+              </li>
+            ))}
+          </ul>
+        );
+      }
+
+      function App() {
+        const [players, setPlayers] = React.useState([]);
+
+        const addPlayer = (player) => {
+          const newPlayer = { id: Date.now(), ...player };
+          setPlayers([...players, newPlayer]);
+        };
+
+        const deletePlayer = (id) => {
+          const updatedPlayers = players.filter((player) => player.id !== id);
+          setPlayers(updatedPlayers);
+        };
+
+        const editPlayer = (updatedPlayer) => {
+          const updatedPlayers = players.map((player) =>
+            player.id === updatedPlayer.id ? updatedPlayer : player
+          );
+          setPlayers(updatedPlayers);
+        };
+
+        return (
+          <div>
+            <h1>Player Management</h1>
+            <PlayerForm addPlayer={addPlayer} editPlayer={editPlayer} />
+            <PlayerList players={players} deletePlayer={deletePlayer} editPlayer={editPlayer} />
+          </div>
+        );
+      }
+      ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+  </body>
+</html>
